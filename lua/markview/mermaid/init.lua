@@ -1,7 +1,7 @@
 --[[
 Renders `mermaid` code blocks as images.
 
-The diagram is converted to a PNG file by an external command(`mmdr` by default)
+The diagram is converted to a PNG file by an external command(`mmdc` by default)
 & shown with the kitty graphics protocol's unicode placeholders. The source of
 the code block is hidden while the image is shown.
 ]]
@@ -11,6 +11,7 @@ local spec = require("markview.spec");
 local utils = require("markview.utils");
 
 local convert = require("markview.mermaid.convert");
+local direction = require("markview.mermaid.direction");
 local image = require("markview.mermaid.image");
 local placement = require("markview.mermaid.placement");
 local terminal = require("markview.mermaid.terminal");
@@ -40,6 +41,36 @@ local function setup_autocmds ()
 		callback = function ()
 			terminal.reset();
 			image.invalidate();
+
+			for _, buffer in ipairs(require("markview.state").get_attached_buffers()) do
+				redraw(buffer);
+			end
+		end
+	});
+
+	-- Images are fit to the window, so resize them along with it.
+	vim.api.nvim_create_autocmd("WinResized", {
+		group = group,
+		callback = function ()
+			local buffers = {};
+
+			for _, win in ipairs(vim.v.event.windows or {}) do
+				if vim.api.nvim_win_is_valid(win) then
+					buffers[vim.api.nvim_win_get_buf(win)] = true;
+				end
+			end
+
+			for buffer, _ in pairs(buffers) do
+				redraw(buffer);
+			end
+		end
+	});
+
+	-- The cell size changes along with the font size.
+	vim.api.nvim_create_autocmd("VimResized", {
+		group = group,
+		callback = function ()
+			terminal.reset();
 
 			for _, buffer in ipairs(require("markview.state").get_attached_buffers()) do
 				redraw(buffer);
@@ -91,33 +122,65 @@ mermaid.render = function (buffer, ns, item)
 
 	local range = item.range;
 	local source = table.concat(item.text, "\n", 2, #item.text - 1) .. "\n";
-	local result, err = convert.get(source, config.command);
+	local command = convert.command(config.command, config.scale or 2);
 
-	if err then
-		show_message(buffer, ns, item, err, config.error_hl);
-		return;
-	elseif not result then
-		convert.convert(source, config.command, config.timeout, function ()
-			redraw(buffer);
-		end);
+	--- Sources to convert. With `direction = "auto"`, one for each layout direction.
+	local sources = (config.direction == "auto" and direction.variants(source)) or { source };
 
+	---@type markview.mermaid.png[]
+	local results = {};
+	local first_err, pending = nil, false;
+
+	for _, variant in ipairs(sources) do
+		local result, err = convert.get(variant, command);
+
+		if result then
+			table.insert(results, result);
+		elseif err then
+			first_err = first_err or err;
+		else
+			pending = true;
+
+			convert.convert(variant, command, config.timeout, function ()
+				redraw(buffer);
+			end);
+		end
+	end
+
+	if pending then
 		if config.pending_text then
 			show_message(buffer, ns, item, config.pending_text, config.pending_hl);
 		end
 
 		return;
+	elseif #results == 0 then
+		show_message(buffer, ns, item, first_err or "Conversion failed.", config.error_hl);
+		return;
 	end
 
+	-- Fit the image to the window(leaving a line for the opening delimiter).
 	local win = utils.buf_getwin(buffer);
-	local max_cols = config.max_width or 80;
+	local max_cols, max_rows = config.max_width or 80, config.max_height or 40;
 
 	if win and vim.api.nvim_win_is_valid(win) then
 		local info = vim.fn.getwininfo(win)[1];
-		max_cols = math.min(max_cols, info.width - info.textoff - range.col_start);
+
+		max_cols = math.min(config.max_width or math.huge, info.width - info.textoff - range.col_start);
+		max_rows = math.min(config.max_height or math.huge, info.height - 1);
 	end
 
 	local cell_width, cell_height = terminal.cell_size();
-	local cols, rows = placement.size(result, cell_width, cell_height, math.max(1, max_cols), config.max_height or 40);
+
+	-- Use the layout that is shown the largest.
+	local result, cols, rows;
+
+	for _, candidate in ipairs(results) do
+		local c, r = placement.size(candidate, cell_width, cell_height, math.max(1, max_cols), math.max(1, max_rows), config.max_scale);
+
+		if not result or c * r > cols * rows then
+			result, cols, rows = candidate, c, r;
+		end
+	end
 
 	local img = image.get(result);
 	image.place(img, cols, rows);
@@ -142,6 +205,10 @@ mermaid.render = function (buffer, ns, item)
 		end_row = range.row_end - 1,
 		conceal_lines = "",
 	});
+
+	if config.scroll ~= false then
+		require("markview.mermaid.scroll").attach(buffer);
+	end
 end
 
 --- Removes cached diagrams & images.

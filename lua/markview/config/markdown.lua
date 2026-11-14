@@ -248,11 +248,17 @@ return {
 	mermaid = {
 		enable = true,
 
-		command = { "mmdr", "-i", "-", "-o", "{file}", "-e", "png" },
-		timeout = 10000,
+		command = { "mmdc", "-i", "-", "-o", "{file}", "-e", "png", "-s", "{scale}", "-q" },
+		timeout = 30000,
 
-		max_width = 100,
-		max_height = 40,
+		scale = 2,
+		direction = "auto",
+
+		max_width = nil,
+		max_height = nil,
+		max_scale = 2,
+
+		scroll = true,
 
 		pending_text = "Rendering mermaid diagram...",
 		pending_hl = "Comment",

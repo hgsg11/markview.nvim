@@ -18,6 +18,16 @@ convert.cache_dir = function ()
 	return vim.fs.joinpath(vim.fn.stdpath("cache") --[[ @as string ]], "markview", "mermaid");
 end
 
+--- Replaces `{scale}` in `command`.
+---@param command string[]
+---@param scale number
+---@return string[]
+convert.command = function (command, scale)
+	return vim.tbl_map(function (arg)
+		return (arg:gsub("{scale}", tostring(scale)));
+	end, command);
+end
+
 --- Path of the PNG file for `source`.
 ---@param source string
 ---@param command string[]
@@ -45,6 +55,24 @@ local function expand (command, file)
 	return vim.tbl_map(function (arg)
 		return (arg:gsub("{file}", file));
 	end, command);
+end
+
+--- First few lines of an error message, without stack traces.
+---@param stderr string
+---@return string
+local function summarize (stderr)
+	local lines = {};
+
+	for _, line in ipairs(vim.split(stderr, "\n", { trimempty = true })) do
+		-- Stack frames look like `at fn (file:1:2)` or `fn (https://...:1:2)`.
+		if line:match("^%s*at%s") or line:match("%(%S+:%d+:%d+%)%s*$") or #lines >= 5 then
+			break;
+		end
+
+		table.insert(lines, line);
+	end
+
+	return vim.trim(table.concat(lines, "\n"));
 end
 
 --- Converts `source` into a PNG file.
@@ -96,7 +124,7 @@ convert.convert = function (source, command, timeout, on_done)
 					vim.uv.fs_unlink(tmp);
 					finish(nil, "Command did not produce a PNG file.");
 				elseif result.width <= 8 and result.height <= 8 then
-					-- `mmdr` succeeds with an empty image for invalid diagrams.
+					-- Some converters(e.g. `mmdr`) succeed with an empty image for invalid diagrams.
 					vim.uv.fs_unlink(tmp);
 					finish(nil, "Diagram is empty. Check the mermaid syntax.");
 				else
@@ -106,7 +134,7 @@ convert.convert = function (source, command, timeout, on_done)
 			else
 				vim.uv.fs_unlink(tmp);
 
-				local message = vim.trim(out.stderr or "");
+				local message = summarize(out.stderr or "");
 				finish(nil, message ~= "" and message or string.format("`%s` exited with code %d.", command[1], out.code));
 			end
 		end);

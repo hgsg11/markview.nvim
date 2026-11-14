@@ -21,22 +21,24 @@ end, vim.split("0305,030D,030E,0310,0312,033D,033E,033F,0346,034A,034B,034C,0350
 --- Largest number of rows/columns a placeholder grid can have.
 placement.max_cells = #diacritics;
 
---- Number of cells needed to show `image`, keeping it's aspect ratio.
+--- Largest number of cells that fit `image` within `max_cols` x `max_rows`, keeping it's aspect ratio.
+--- Images smaller than that are scaled up, by at most `max_scale` times.
 ---@param image markview.mermaid.png
 ---@param cell_width number Cell width in pixels.
 ---@param cell_height number Cell height in pixels.
 ---@param max_cols integer
 ---@param max_rows integer
+---@param max_scale? number
 ---@return integer cols
 ---@return integer rows
-placement.size = function (image, cell_width, cell_height, max_cols, max_rows)
+placement.size = function (image, cell_width, cell_height, max_cols, max_rows, max_scale)
 	max_cols = math.min(max_cols, placement.max_cells);
 	max_rows = math.min(max_rows, placement.max_cells);
 
 	local cols = image.width / cell_width;
 	local rows = image.height / cell_height;
 
-	local scale = math.min(1, max_cols / cols, max_rows / rows);
+	local scale = math.min(max_cols / cols, max_rows / rows, max_scale or math.huge);
 
 	return
 		math.max(1, math.min(max_cols, math.ceil(cols * scale))),

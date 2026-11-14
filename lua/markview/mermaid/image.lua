@@ -12,8 +12,9 @@ local terminal = require("markview.mermaid.terminal");
 ---@type table<string, markview.mermaid.image> Images, indexed by file path.
 image.cache = {};
 
---- Start somewhere random so that images from other Neovim instances aren't overwritten.
-local next_id = math.random(1, 0x7FFF) * 256;
+--- Start somewhere different for each Neovim instance so that their images aren't overwritten.
+--- NOTE: `math.random()` isn't seeded, so it returns the same values in every instance.
+local next_id = ((vim.uv.os_getpid() * 7919 + vim.uv.hrtime()) % 0xFFFF) * 256;
 
 ---@return integer
 local function new_id ()

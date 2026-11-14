@@ -102,11 +102,17 @@
 ---
 ---@field enable boolean Enable rendering of mermaid diagrams.
 ---
----@field command string[] Command that reads mermaid source from `stdin` & writes a PNG file to `{file}`.
+---@field command string[] Command that reads mermaid source from `stdin` & writes a PNG file to `{file}`. `{scale}` is replaced with `scale`.
 ---@field timeout? integer Time(in milliseconds) after which the command is killed.
 ---
----@field max_width? integer Maximum width(in columns) of the image.
----@field max_height? integer Maximum height(in rows) of the image.
+---@field scale? number Resolution multiplier used for conversion. Larger values produce sharper images.
+---@field direction? "auto" | false With `"auto"`, diagrams without a direction are converted top-to-bottom & left-to-right, and the one that is shown the largest in the window is used.
+---
+---@field max_width? integer Maximum width(in columns) of the image. Defaults to the window width.
+---@field max_height? integer Maximum height(in rows) of the image. Defaults to the window height.
+---@field max_scale? number Maximum amount small images are scaled up by.
+---
+---@field scroll? boolean Makes `j` & `k` scroll through images that don't fit in the window.
 ---
 ---@field pending_text? string Text shown while the diagram is being converted. `nil` to show nothing.
 ---@field pending_hl? string Highlight group for `pending_text`.
