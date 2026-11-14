@@ -106,6 +106,7 @@
 ---@field timeout? integer Time(in milliseconds) after which the command is killed.
 ---
 ---@field scale? number Resolution multiplier used for conversion. Larger values produce sharper images.
+---@field position? "overlay" | "below" | "above" | "float" Where the image is shown. `overlay` replaces the source, `below`/`above` show it next to the source & `float` shows it in a floating window while the cursor is inside the code block.
 ---@field direction? "auto" | false With `"auto"`, diagrams without a direction are converted top-to-bottom & left-to-right, and the one that is shown the largest in the window is used.
 ---
 ---@field max_width? integer Maximum width(in columns) of the image. Defaults to the window width.

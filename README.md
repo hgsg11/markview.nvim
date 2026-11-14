@@ -11,7 +11,7 @@
 `mermaid` code blocks are converted to PNG with [mermaid-cli](https://github.com/mermaid-js/mermaid-cli) (`mmdc`) and shown in place of the source using the [kitty graphics protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/#unicode-placeholders) (unicode placeholders).
 
 - Conversion runs asynchronously (`mmdc` takes ~1.5s per diagram); converted images are cached in `stdpath("cache")/markview/mermaid`.
-- Moving the cursor into the block (hybrid mode) shows the source again.
+- The image can replace the source, be shown above/below it, or in a floating window while the cursor is inside the block (`position`).
 - If conversion fails, the source stays visible and the error is shown below it.
 
 ## Requirements
@@ -53,6 +53,13 @@ require("markview").setup({
 
             -- Resolution multiplier. Larger values stay sharp when scaled.
             scale = 2,
+
+            -- Where the image is shown,
+            --   "overlay": in place of the source(shown again in hybrid mode)
+            --   "below":   below the code block
+            --   "above":   above the code block
+            --   "float":   in a floating window, while the cursor is inside the code block
+            position = "overlay",
 
             -- "auto": diagrams without a direction are converted both
             -- top-to-bottom & left-to-right, and the one shown the largest

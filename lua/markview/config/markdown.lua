@@ -252,6 +252,8 @@ return {
 		timeout = 30000,
 
 		scale = 2,
+
+		position = "overlay",
 		direction = "auto",
 
 		max_width = nil,

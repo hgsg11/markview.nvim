@@ -21,7 +21,7 @@ local function has_image (buffer, row)
 		local virt_lines = mark[4].virt_lines;
 		local chunk = virt_lines and virt_lines[1] and virt_lines[1][2];
 
-		if chunk and type(chunk[2]) == "string" and chunk[2]:match("^MarkviewMermaidImage") then
+		if chunk and type(chunk[2]) == "string" and chunk[2]:match("^MarkviewMermaidImage") and not mark[4].virt_lines_above then
 			return true;
 		end
 	end
@@ -29,10 +29,16 @@ local function has_image (buffer, row)
 	return false;
 end
 
---- Image block containing `row`(the opening delimiter or a hidden line).
+--[[
+Image block containing `row`.
+
+`start` is the line the image is attached to(images are shown below it).
+With `position = "overlay"` the source is hidden after it, `last` is the
+last hidden line. Otherwise `last` is the same as `start`.
+]]
 ---@param buffer integer
 ---@param row integer 0-indexed.
----@return { start: integer, last: integer }? block 0-indexed rows of the opening delimiter & the last hidden line.
+---@return { start: integer, last: integer }? block 0-indexed rows.
 local function block_at (buffer, row)
 	if has_image(buffer, row) then
 		for _, mark in ipairs(vim.api.nvim_buf_get_extmarks(buffer, ns(), { row + 1, 0 }, { row + 1, -1 }, { details = true })) do
@@ -41,7 +47,7 @@ local function block_at (buffer, row)
 			end
 		end
 
-		return;
+		return { start = row, last = row };
 	end
 
 	for _, mark in ipairs(vim.api.nvim_buf_get_extmarks(buffer, ns(), { row, 0 }, { row, -1 }, { details = true, overlap = true })) do
@@ -175,10 +181,6 @@ scroll.up = function (buffer)
 	end
 
 	local height = image_height(buffer, block.start);
-
-	if view.topline - 1 > block.last then
-		view.topfill = 0;
-	end
 
 	if view.topfill >= height then
 		view.topline = block.start + 1;
