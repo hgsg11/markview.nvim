@@ -727,6 +727,10 @@ markdown.code_block = function (buffer, item)
 	elseif config.style == "block" then
 		render_block()
 	end
+
+	if item.language == "mermaid" then
+		require("markview.mermaid").render(buffer, markdown.ns, item);
+	end
 end
 
 --- Renders fenced code blocks.

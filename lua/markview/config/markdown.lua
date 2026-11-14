@@ -245,6 +245,20 @@ return {
 		sign = true,
 	},
 
+	mermaid = {
+		enable = true,
+
+		command = { "mmdr", "-i", "-", "-o", "{file}", "-e", "png" },
+		timeout = 10000,
+
+		max_width = 100,
+		max_height = 40,
+
+		pending_text = "Rendering mermaid diagram...",
+		pending_hl = "Comment",
+		error_hl = "DiagnosticError",
+	},
+
 	headings = {
 		enable = true,
 

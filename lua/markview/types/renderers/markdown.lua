@@ -10,6 +10,7 @@
 ---@field headings markview.config.markdown.headings Heading configuration.
 ---@field horizontal_rules markview.config.markdown.hr Horizontal rules configuration.
 ---@field list_items markview.config.markdown.list_items List items configuration.
+---@field mermaid markview.config.markdown.mermaid Mermaid diagram configuration.
 ---@field metadata_minus markview.config.markdown.metadata YAML metadata configuration.
 ---@field metadata_plus markview.config.markdown.metadata TOML metadata configuration.
 ---@field reference_definitions markview.config.markdown.ref_def Reference link definition configuration.
@@ -94,6 +95,22 @@
 ---
 ---@field default markview.config.markdown.code_blocks.opts
 ---@field [string] markview.config.markdown.code_blocks.opts
+
+
+--- Configuration for rendering `mermaid` code blocks as images.
+---@class markview.config.markdown.mermaid
+---
+---@field enable boolean Enable rendering of mermaid diagrams.
+---
+---@field command string[] Command that reads mermaid source from `stdin` & writes a PNG file to `{file}`.
+---@field timeout? integer Time(in milliseconds) after which the command is killed.
+---
+---@field max_width? integer Maximum width(in columns) of the image.
+---@field max_height? integer Maximum height(in rows) of the image.
+---
+---@field pending_text? string Text shown while the diagram is being converted. `nil` to show nothing.
+---@field pending_hl? string Highlight group for `pending_text`.
+---@field error_hl? string Highlight group for error messages.
 
 
 --[[ Configuration for highlighting `lines` inside a code block. ]]
